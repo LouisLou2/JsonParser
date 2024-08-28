@@ -10,6 +10,15 @@
 
 #include "json_type.h"
 
+template<typename ...Ts>
+struct overload : Ts... {
+  using Ts::operator()...;
+};
+
+// explicit deduction guide
+template<typename ...Ts>
+overload(Ts...) -> overload<Ts...>;
+
 class JsonParser {
 private:
   static std::string_view skipChars;
@@ -26,6 +35,7 @@ private:
 
 public:
   static std::pair<JsonObj,size_t> parse(std::string_view jsonStr);
+  static std::string stringify(const JsonObj& obj);
 };
 
 inline bool JsonParser::isNumPrefix(char ch) {

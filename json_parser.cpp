@@ -2,7 +2,7 @@
 // Created by leo.
 //
 #include <charconv>
-
+#include <unordered_map>
 #include "json_parser.h"
 
 #include "json_err.h"
@@ -64,7 +64,7 @@ std::pair<std::vector<JsonObj>, size_t> JsonParser::parseList(std::string_view s
       ++i;
       break;
     }
-    if(str[i]==' ' || str[i]==',') {
+    if(str[i]==' '|| str[i]=='\n'|| str[i]==',') {
       ++i;
       continue;
     }
@@ -91,7 +91,7 @@ std::pair<std::map<std::string, JsonObj>, size_t> JsonParser::parseDict(std::str
       ++i;
       break;
     }
-    if (str[i]==' ' || str[i]==',') {
+    if (str[i]==' '|| str[i]=='\n' || str[i]==',') {
       ++i;
       continue;
     }
@@ -188,4 +188,51 @@ std::pair<JsonObj, size_t> JsonParser::parse(std::string_view jsonStr) {
     return {JsonObj(std::move(res.first)),res.second};
   }
   throw std::invalid_argument(JsonError::detail(JsonErrorCode::BrokenStructure,jsonStr));
+}
+
+
+std::string JsonParser::stringify(const JsonObj& obj) {
+  switch (static_cast<uint8_t>(obj.inner.index())) {
+  case static_cast<uint8_t>(JsonType::Null):
+    return "null";
+  case static_cast<uint8_t>(JsonType::Bool):
+    if (std::get<bool>(obj.inner)) {
+      return "true";
+    } else {
+      return "false";
+    }
+  case static_cast<uint8_t>(JsonType::Int):
+    return std::to_string(std::get<int>(obj.inner));
+  case static_cast<uint8_t>(JsonType::Double):
+    return std::to_string(std::get<double>(obj.inner));
+  case static_cast<uint8_t>(JsonType::String):
+    return "\""+std::get<std::string>(obj.inner)+"\"";
+  case static_cast<uint8_t>(JsonType::List): {
+    std::string listr="[";
+    const auto lis = std::get<std::vector<JsonObj>>(obj.inner);
+    for (const auto& e: lis) {
+      listr+=stringify(e);
+      listr+=",";
+    }
+    // drop the last ','
+    listr.pop_back();
+    listr+="]";
+    return listr;
+  }
+  case static_cast<uint8_t>(JsonType::Dict): {
+    std::string dictr="{";
+    const auto dict = std::get<std::map<std::string, JsonObj>>(obj.inner);
+    for (const auto& kv: dict) {
+      dictr+="\""+kv.first+"\":";
+      dictr+=stringify(kv.second);
+      dictr+=",";
+    }
+    // drop the last ','
+    dictr.pop_back();
+    dictr+="}";
+    return dictr;
+  }
+  default:
+    throw std::invalid_argument(JsonError::detail(JsonErrorCode::BrokenStructure,""));
+  }
 }
