@@ -22,6 +22,8 @@ JsonObj::JsonObj(const JsonList& lis): inner(lis) {}
 
 JsonObj::JsonObj(const JsonDict& dict): inner(dict) {}
 
+JsonObj::JsonObj(const JsonDictInner& dict):JsonObj(JsonDict(dict)){}
+
 JsonObj::JsonObj(std::nullptr_t) : inner(nullptr) {}
 
 JsonObj::JsonObj(bool b): inner(b) {}
@@ -35,6 +37,8 @@ JsonObj::JsonObj(const std::string& str): inner(str) {}
 JsonObj::JsonObj(std::string&& str): inner(std::move(str)) {}
 
 JsonObj::JsonObj(JsonList&& lis) : inner(std::move(lis)) {}
+
+JsonObj::JsonObj(JsonDictInner&& dict):JsonObj(JsonDict(std::move(dict))){}
 JsonObj::JsonObj(JsonDict&& dict) : inner(std::move(dict)) {}
 
 bool JsonObj::support(const uint8_t index) {

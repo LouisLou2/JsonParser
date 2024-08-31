@@ -49,8 +49,10 @@ struct JsonObj {
 
   static std::array<std::string_view,7> typeNames;
   // constructor
+  JsonObj() = default;  // 默认构造函数
   JsonObj(const JsonList& lis);
   JsonObj(const JsonDict& dict);
+  JsonObj(const JsonDictInner& dict);
   JsonObj(std::nullptr_t);
   JsonObj(bool b);
   JsonObj(int i);
@@ -59,6 +61,7 @@ struct JsonObj {
   // move constructor
   JsonObj(std::string&& str);
   JsonObj(JsonList&& lis);
+  JsonObj(JsonDictInner&& dict);
   JsonObj(JsonDict&& dict);
 
 

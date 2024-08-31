@@ -2,10 +2,10 @@
 #include <iostream>
 #include <chrono>
 
-int main() {
-  // test1: parse string
-  auto begin = std::chrono::high_resolution_clock::now();
-  std::string_view str = R"JSON({
+void testParseStr() {
+    // test1: parse string
+    auto begin = std::chrono::high_resolution_clock::now();
+    std::string_view str = R"JSON({
     "orderId": "123456789",
     "customer": {
         "customerId": "987654321",
@@ -84,16 +84,13 @@ int main() {
         "currency": "USD"
     },
     "comments": "Please deliver between 9 AM and 5 PM."
-})JSON";
-  auto [obj, eaten] = JsonParser::parse(str);
-  auto end = std::chrono::high_resolution_clock::now();
-  std::cout<<"Time: "<<std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()<<std::endl;
-  // JsonDict dict = std::get<JsonDict>(obj.inner);
-  // auto book=dict["book"];
-  // if(std::holds_alternative<std::nullptr_t>(book.inner)) {
-  //   std::cout<<"book is null"<<std::endl;
-  // }
-  std::visit(
+    })JSON";
+    // parsed
+    auto [obj, eaten] = JsonParser::parse(str);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout<<"Time: "<<std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()<<std::endl;
+    // cout stringified obj
+    std::visit(
       overload{
           [&] (int val) {
               std::cout<<val<<std::endl;
@@ -114,12 +111,32 @@ int main() {
               std::cout<<JsonParser::stringify(val)<<std::endl;
           }
       },obj.inner);
-  // test2: stringify for map
-  auto encoded = JsonParser::stringify(obj);
-  //test 2: stringify for dict
-  JsonDict yu;
-  yu.set("key1",12);
-  auto str1=yu.dump();
-  auto key1=yu.getInt("key1").value();
-  return 0;
+    // get k-v
+    auto dict = std::get<JsonDict>(obj.inner);
+    auto orderId = dict.getString("orderId");
+    if (orderId) {
+        std::cout<<"orderId: "<<*orderId<<std::endl;
+    }else {
+        std::cout<<"orderId is null"<<std::endl;
+    }
+}
+
+void testStringify() {
+    // test2: stringify for map
+    JsonDict obj;
+    obj.set("age",12);
+    obj.set("name","leo");
+    obj.set("weight",65.5);
+    obj.set("days",std::vector<JsonObj>{1,2,3,4,5});
+    std::map<std::string,JsonObj> scores;
+    scores["math"]=100;
+    scores["english"]=90.5;
+    obj.set("scores",scores);
+    auto encoded = JsonParser::stringify(obj);
+    std::cout<<encoded<<std::endl;
+}
+int main() {
+    testParseStr();
+    testStringify();
+    return 0;
 }
