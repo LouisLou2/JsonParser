@@ -3,6 +3,7 @@
 #include <chrono>
 
 int main() {
+  // test1: parse string
   auto begin = std::chrono::high_resolution_clock::now();
   std::string_view str = R"JSON({
     "orderId": "123456789",
@@ -106,13 +107,18 @@ int main() {
             [&] (std::nullptr_t val) {
                 std::cout<<"null"<<std::endl;
             },
-            [&] (std::string val) {
+            [&] (const std::string& val) {
                 std::cout<<val<<std::endl;
             },
           [&] (auto val) {
               std::cout<<JsonParser::stringify(val)<<std::endl;
           }
       },obj.inner);
+  // test2: stringify for map
   auto encoded = JsonParser::stringify(obj);
+  //test 2: stringify for dict
+  JsonDict yu;
+  yu.set("key1",12);
+  auto str1=yu.dump();
   return 0;
 }

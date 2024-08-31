@@ -14,9 +14,9 @@ template <typename T>
 std::optional<T> JsonParser::tryParseNum(std::string_view str) {
   T value;
   auto res = std::from_chars(str.data(),str.end(),value);
-  auto it1=str.end();
-  auto it2=str.data()+str.size();
-  auto it3=res.ptr;
+  // auto it1=str.end();
+  // auto it2=str.data()+str.size();
+  // auto it3=res.ptr;
   if (res.ec==std::errc() && res.ptr==str.end()) {
     return value;
   }
@@ -81,8 +81,8 @@ std::pair<std::vector<JsonObj>, size_t> JsonParser::parseList(std::string_view s
   return {lis,i};
 }
 
-std::pair<std::map<std::string, JsonObj>, size_t> JsonParser::parseDict(std::string_view str) {
-  std::map<std::string, JsonObj> dict;
+std::pair<JsonDictInner, size_t> JsonParser::parseDict(std::string_view str) {
+  JsonDictInner dict;
   size_t i = 1; // 0是{
   bool nowKey = true;
   std::string keyStr;
@@ -185,9 +185,23 @@ std::pair<JsonObj, size_t> JsonParser::parse(std::string_view jsonStr) {
   // object
   if(jsonStr[0]=='{') {
     auto res = parseDict(jsonStr);
-    return {JsonObj(std::move(res.first)),res.second};
+    return {JsonObj(JsonDict(std::move(res.first))),res.second};
   }
   throw std::invalid_argument(JsonError::detail(JsonErrorCode::BrokenStructure,jsonStr));
+}
+
+std::string JsonParser::stringify(const JsonDict& jsonDict) {
+  std::string dictr="{";
+  const auto& dict = jsonDict.get();
+  for (const auto& kv: dict) {
+    dictr+="\""+kv.first+"\":";
+    dictr+=stringify(kv.second);
+    dictr+=",";
+  }
+  // drop the last ','
+  dictr.pop_back();
+  dictr+="}";
+  return dictr;
 }
 
 
@@ -209,7 +223,7 @@ std::string JsonParser::stringify(const JsonObj& obj) {
     return "\""+std::get<std::string>(obj.inner)+"\"";
   case static_cast<uint8_t>(JsonType::List): {
     std::string listr="[";
-    const auto lis = std::get<std::vector<JsonObj>>(obj.inner);
+    const auto lis = std::get<JsonList>(obj.inner);
     for (const auto& e: lis) {
       listr+=stringify(e);
       listr+=",";
@@ -220,17 +234,8 @@ std::string JsonParser::stringify(const JsonObj& obj) {
     return listr;
   }
   case static_cast<uint8_t>(JsonType::Dict): {
-    std::string dictr="{";
-    const auto dict = std::get<std::map<std::string, JsonObj>>(obj.inner);
-    for (const auto& kv: dict) {
-      dictr+="\""+kv.first+"\":";
-      dictr+=stringify(kv.second);
-      dictr+=",";
-    }
-    // drop the last ','
-    dictr.pop_back();
-    dictr+="}";
-    return dictr;
+    const auto dict = std::get<JsonDict>(obj.inner);
+    return stringify(dict);
   }
   default:
     throw std::invalid_argument(JsonError::detail(JsonErrorCode::BrokenStructure,""));

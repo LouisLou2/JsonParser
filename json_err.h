@@ -14,6 +14,10 @@ enum class JsonErrorCode {
   InvalidStringFormat=2,
   InvalidBoolFormat=3,
   InvalidNullFormat=4,
+
+  // for getValue
+  ValueTypeMismatch=5,
+  KeyNotFound=6
 };
 
 struct JsonError {

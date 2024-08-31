@@ -35,6 +35,7 @@ private:
 
 public:
   static std::pair<JsonObj,size_t> parse(std::string_view jsonStr);
+  static std::string stringify(const JsonDict& dict);
   static std::string stringify(const JsonObj& obj);
 };
 

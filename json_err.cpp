@@ -23,6 +23,10 @@ std::string_view JsonError::errorName(JsonErrorCode ec) {
       return "InvalidBoolFormat: ";
     case JsonErrorCode::InvalidNullFormat:
       return "InvalidNullFormat: ";
+    case JsonErrorCode::ValueTypeMismatch:
+      return "ValueTypeMismatch: ";
+    case JsonErrorCode::KeyNotFound:
+      return "KeyNotFound: ";
     default:
       return "Unknown error: ";
   }
