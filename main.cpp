@@ -120,5 +120,6 @@ int main() {
   JsonDict yu;
   yu.set("key1",12);
   auto str1=yu.dump();
+  auto key1=yu.getInt("key1").value();
   return 0;
 }
