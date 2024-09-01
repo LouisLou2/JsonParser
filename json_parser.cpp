@@ -125,7 +125,7 @@ std::pair<JsonDictInner, size_t> JsonParser::parseDict(std::string_view str) {
   return {dict,i};
 }
 
-std::pair<JsonObj, size_t> JsonParser::parse(std::string_view jsonStr) {
+std::pair<JsonObj, size_t> JsonParser::parse(const std::string_view& jsonStr) {
   // empty json
   if (jsonStr.empty()) {
     return {JsonObj(std::nullptr_t{}),0};
@@ -185,14 +185,14 @@ std::pair<JsonObj, size_t> JsonParser::parse(std::string_view jsonStr) {
   // object
   if(jsonStr[0]=='{') {
     auto res = parseDict(jsonStr);
-    return {JsonObj(JsonDict(std::move(res.first))),res.second};
+    return {JsonObj(std::move(res.first)),res.second};
   }
   throw std::invalid_argument(JsonError::detail(JsonErrorCode::BrokenStructure,jsonStr));
 }
 
 std::string JsonParser::stringify(const JsonDict& jsonDict) {
   std::string dictr="{";
-  const auto& dict = jsonDict.get();
+  const auto& dict = jsonDict.data();
   for (const auto& kv: dict) {
     dictr+="\""+kv.first+"\":";
     dictr+=stringify(kv.second);

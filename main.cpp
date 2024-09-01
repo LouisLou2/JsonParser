@@ -4,7 +4,6 @@
 
 void testParseStr() {
     // test1: parse string
-    auto begin = std::chrono::high_resolution_clock::now();
     std::string_view str = R"JSON({
     "orderId": "123456789",
     "customer": {
@@ -85,6 +84,7 @@ void testParseStr() {
     },
     "comments": "Please deliver between 9 AM and 5 PM."
     })JSON";
+    auto begin = std::chrono::high_resolution_clock::now();
     // parsed
     auto [obj, eaten] = JsonParser::parse(str);
     auto end = std::chrono::high_resolution_clock::now();
@@ -112,9 +112,8 @@ void testParseStr() {
           }
       },obj.inner);
     // get k-v
-    auto dict = std::get<JsonDict>(obj.inner);
-    auto orderId = dict.getString("orderId");
-    if (orderId) {
+    auto dict = obj.get<JsonDict>();
+    if (const auto orderId = dict.get<std::string>("orderId")) {
         std::cout<<"orderId: "<<*orderId<<std::endl;
     }else {
         std::cout<<"orderId is null"<<std::endl;
@@ -132,6 +131,7 @@ void testStringify() {
     scores["math"]=100;
     scores["english"]=90.5;
     obj.set("scores",scores);
+    auto it=obj.get<int>("age");
     auto encoded = JsonParser::stringify(obj);
     std::cout<<encoded<<std::endl;
 }

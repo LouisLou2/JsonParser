@@ -1,5 +1,9 @@
 #ifndef JSON_TYPE_H
 #define JSON_TYPE_H
+
+#include "json_err.h"
+
+#include <stdexcept>
 #include <map>
 #include <optional>
 #include <string>
@@ -7,6 +11,17 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+
+
+enum class JsonType {
+  Null=0,
+  Bool=1,
+  Int=2,
+  Double=3,
+  String=4,
+  List=5,
+  Dict=6
+};
 
 struct JsonObj;
 using JsonDictInner = std::map<std::string, JsonObj>;
@@ -24,14 +39,10 @@ public:
   void set(const std::string& key, const JsonObj& val);
   void set(const std::string& key, JsonObj&& val);
   // getter
-  [[nodiscard]] const std::map<std::string, JsonObj>& get() const;
+  [[nodiscard]] const std::map<std::string, JsonObj>& data() const;
   // get value
-  [[nodiscard]] std::optional<bool> getBool(const std::string& key) const;
-  [[nodiscard]] std::optional<int> getInt(const std::string& key) const;
-  [[nodiscard]] std::optional<double> getDouble(const std::string& key) const;
-  [[nodiscard]] std::optional<std::string> getString(const std::string& key) const;
-  [[nodiscard]] std::optional<JsonList> getList(const std::string& key) const;
-  [[nodiscard]] std::optional<JsonDict> getDict(const std::string& key) const;
+  template<typename T>
+  [[nodiscard]] std::optional<T> get(const std::string& key);
   // dump
   [[nodiscard]] std::string dump() const;
 };
@@ -69,20 +80,41 @@ struct JsonObj {
   bool is() const;
 
   template<typename T>
-  T& get() const;
+  T& get();
 
   static std::string_view type(uint8_t index);
   static bool support(uint8_t index);
 };
 
-enum class JsonType {
-  Null=0,
-  Bool=1,
-  Int=2,
-  Double=3,
-  String=4,
-  List=5,
-  Dict=6
-};
+template<typename T>
+bool JsonObj::is() const {
+  return std::holds_alternative<T>(inner);
+}
+
+template <typename T>
+T& JsonObj::get(){
+  return std::get<T>(inner);
+}
+
+template<typename T>
+std::optional<T> JsonDict::get(const std::string& key){
+  auto it = dict.find(key);
+  if (it == dict.end()) return std::nullopt;
+  if (std::holds_alternative<T>(it->second.inner)) {
+    return std::get<T>(it->second.inner);
+  }
+  const auto index = it->second.inner.index();
+  throw std::invalid_argument(
+      JsonError::detail(
+          JsonErrorCode::ValueTypeMismatch,
+          "type index("
+          + std::to_string(index)
+          + ") for "
+          + std::string(JsonObj::type(index))
+          + " is not "
+          + typeid(T).name()
+      )
+  );
+}
 
 #endif //JSON_TYPE_H
